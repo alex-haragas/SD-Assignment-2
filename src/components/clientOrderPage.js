@@ -8,17 +8,26 @@ class clientOrderPage extends Component {
         super(props);
         this.state = {orders:[]};
         this.username = this.props.match.params.username;
+        this.user=JSON.parse(localStorage.getItem('user'));
 
     }
 
 
     async componentDidMount() {
-        axios.get("/orders/client/"+this.username).then(response=>response.data).then(
-            (data)=>{
-                this.setState({orders:data});
-            }
-        );
+        if(this.user.username===this.username) {
+            axios.get("/orders/client/" + this.username,{
+                headers:{Authorization: "Bearer " + this.user.jwt }
+            }).then(response => response.data).then(
+                (data) => {
+                    this.setState({orders: data});
+                }
+            );
+        }
+        else{
+            this.setState({orders:[]});
+        }
     }
+
 
 
 

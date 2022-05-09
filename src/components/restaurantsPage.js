@@ -15,48 +15,60 @@ class restaurantPage extends Component {
         const value={
             name:this.props.match.params.username
         }
+        this.user=JSON.parse(localStorage.getItem('user'));
     }
 
 
-    async componentDidMount(){
-        axios.get("/restaurant/"+this.username).then(response=>response.data).then(
-            (data)=>{
-                this.setState({rezName:data.name,rezLoc: data.location});
-            }
-        );
+    async componentDidMount() {
+        if (this.user.username === this.username) {
+            axios.get("/restaurant/" + this.username).then(response => response.data).then(
+                (data) => {
+                    this.setState({rezName: data.name, rezLoc: data.location});
+                }
+            );
+        }
     }
+
 
     createRestaurant = event => {
-        const addVal={name: this.state.name,
-            loc: this.state.location,
-            usr: this.username}
-        axios.post("/restaurant/add",addVal).then(response => {
-                if (response.data != null) {
-                    this.restaurant.name=response.data.name;
-                    this.restaurant.location=response.data.location;
-                }
-                else{
-                    alert("Something is wrong.");
-                }
+        if(this.user.username==this.username) {
+            const addVal = {
+                name: this.state.name,
+                loc: this.state.location,
+                usr: this.username
             }
-        )
-        event.preventDefault();
+            axios.post("/restaurant/add", addVal, {
+                headers: {Authorization: "Bearer " + this.user.jwt}
+            }).then(response => {
+                    if (response.data != null) {
+                        this.restaurant.name = response.data.name;
+                        this.restaurant.location = response.data.location;
+                    } else {
+                        alert("Something is wrong.");
+                    }
+                }
+            )
+            event.preventDefault();
+        }
 
     }
 
     deleteRestaurant = event=>{
-        const delValue={
-            name: this.state.rezName
-        }
-        console.log("random")
-        axios.post("/restaurant/delete",delValue).then(response => {
-                if (response.data != null) {
-                    alert("Deleted Restaurant")
-                }
+        if(this.user.username===this.username) {
+            const delValue = {
+                name: this.state.rezName
             }
-        )
-        event.preventDefault();
-
+            console.log("random")
+            axios.post("/restaurant/delete", delValue,{
+                headers:{Authorization: "Bearer " + this.user.jwt }
+            }).then(response => {
+                    if (response.data != null) {
+                        alert("Deleted Restaurant")
+                    }
+                }
+            )
+            event.preventDefault();
+        }
     }
 
     restaurantChange = event => {

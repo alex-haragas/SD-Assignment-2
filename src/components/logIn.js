@@ -18,9 +18,13 @@ class logIn extends Component {
             username: this.state.username,
             password: this.state.password
         }
-        axios.post("/logIn/check", user).then(response => {
+        axios.post('/authcontroller/logIn', user).then(response => {
             if (response.data != null) {
-                this.props.history.push(response.data);
+                localStorage.setItem('user',JSON.stringify(response.data))
+                if(response.data.role==='ADMIN')
+                    this.props.history.push('admins/'+response.data.username);
+                if(response.data.role==='CLIENT')
+                    this.props.history.push('clients/'+response.data.username);
             }
             else{
                 alert("Username or password wrong");

@@ -6,22 +6,29 @@ class adminOrderPage extends Component {
 
     constructor(props) {
         super(props);
-        this.state = {orders:[], sCateg:''};
-        this.username=this.props.match.params.username;
-        this.orderChange=this.orderChange.bind(this);
-        this.orderAccept=this.orderAccept.bind(this);
-        this.orderDecline=this.orderDecline.bind(this);
+        this.state = {orders: [], sCateg: ''};
+        this.username = this.props.match.params.username;
+        this.orderChange = this.orderChange.bind(this);
+        this.orderAccept = this.orderAccept.bind(this);
+        this.orderDecline = this.orderDecline.bind(this);
+        this.createPdf = this.createPdf.bind(this);
+        this.user = JSON.parse(localStorage.getItem('user'));
     }
 
 
-    async componentDidMount(){
-        axios.get("/orders/admin/"+this.username).then(response=>response.data).then(
-            (data)=>{
-                this.setState({orders:data});
-            }
-        );
+    async componentDidMount() {
+        if (this.user.username === this.username) {
+            axios.get("/orders/admin/" + this.username, {
+                headers: {Authorization: "Bearer " + this.user.jwt}
+            }).then(response => response.data).then(
+                (data) => {
+                    this.setState({orders: data});
+                }
+            );
+        } else {
+            this.setState({orders: []});
+        }
     }
-
 
 
     orderChange = event => {
@@ -30,11 +37,13 @@ class adminOrderPage extends Component {
         });
     }
 
-    orderDecline(order){
-        axios.post("/orders/decline", order).then(response=> {
+    orderDecline(order) {
+        axios.post("/orders/decline", order, {
+            headers: {Authorization: "Bearer " + this.user.jwt}
+        }).then(response => {
             if (response.data != null) {
                 alert("Changed")
-                order=response.data
+                order = response.data
                 window.location.reload()
             }
         })
@@ -42,11 +51,25 @@ class adminOrderPage extends Component {
 
     }
 
-    orderAccept(order){
-        axios.post("/orders/accept",order).then(response=> {
+    orderAccept(order) {
+        axios.post("/orders/accept", order, {
+            headers: {Authorization: "Bearer " + this.user.jwt}
+        }).then(response => {
             if (response.data != null) {
                 alert("Changed")
                 window.location.reload()
+            }
+        })
+    }
+
+    createPdf(order) {
+        axios.post("/pdf/create", order, {
+            headers: {Authorization: "Bearer " + this.user.jwt}
+        }).then(response => {
+            if (response.data === "File Created") {
+                alert("Created")
+            } else {
+                alert("File already exits")
             }
         })
     }
@@ -80,9 +103,9 @@ class adminOrderPage extends Component {
                         <tbody>
                         {
                             this.state.orders.length === 0 ?
-                                <tr></tr>:
-                                this.state.orders.map((order)=>(
-                                    order.status===this.state.sCateg || this.state.sCateg===''?
+                                <tr></tr> :
+                                this.state.orders.map((order) => (
+                                    order.status === this.state.sCateg || this.state.sCateg === '' ?
                                         <tr key={order.id}>
                                             <td>{order.id}</td>
                                             <td> {order.client.username}</td>
@@ -104,17 +127,27 @@ class adminOrderPage extends Component {
                                                 ))}
                                                 </tbody>
                                             </Table>
-                                            <td>
-                                                <ButtonGroup>
-                                                    <Button onClick={()=>this.orderAccept(order)}>
-                                                        Accept
-                                                    </Button>
-                                                    <Button onClick={()=>this.orderDecline(order)}>
-                                                        Decline
-                                                    </Button>
-                                                </ButtonGroup>
-                                            </td>
-                                        </tr>:
+                                            {order.status === 'DELIVERED' ?
+                                                <td>
+                                                    <ButtonGroup>
+                                                        <Button onClick={() => this.createPdf(order)}>
+                                                            PDF
+                                                        </Button>
+                                                    </ButtonGroup>
+                                                </td> :
+                                                <td>
+                                                    <ButtonGroup>
+                                                        <Button onClick={() => this.orderAccept(order)}>
+                                                            Accept
+                                                        </Button>
+                                                        <Button onClick={() => this.orderDecline(order)}>
+                                                            Decline
+                                                        </Button>
+                                                    </ButtonGroup>
+                                                </td>
+                                            }
+
+                                        </tr> :
                                         <tr></tr>
                                 ))
                         }

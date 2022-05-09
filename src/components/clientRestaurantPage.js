@@ -1,4 +1,6 @@
 import {Component} from "react";
+import React, { useRef } from 'react';
+import emailjs from '@emailjs/browser';
 import {Card, Form, ButtonGroup, Button, Table} from 'react-bootstrap';
 import axios from 'axios';
 
@@ -6,21 +8,27 @@ class clientRestaurantPage extends Component {
 
     constructor(props) {
         super(props);
-        this.state = {restaurants: [], sName: '', cart: [],price:0};
+        this.state = {restaurants: [], sName: '', cart: [],price:0, selRes: ''};
         this.restaurantChange = this.restaurantChange.bind(this);
         this.username = this.props.match.params.username;
         this.addFood = this.addFood.bind(this);
         this.deleteFood = this.deleteFood.bind(this);
         this.addOrder=this.addOrder.bind(this);
+        this.makeEmail=this.makeEmail.bind(this);
+        this.user=JSON.parse(localStorage.getItem('user'))
     }
 
 
     async componentDidMount() {
-        axios.post("/restaurant/all").then(response => response.data).then(
-            (data) => {
-                this.setState({restaurants: data});
-            }
-        );
+        if(this.user.username===this.username) {
+            axios.post("/restaurant/all",{
+                headers:{Authorization: "Bearer " + this.user.jwt }
+            }).then(response => response.data).then(
+                (data) => {
+                    this.setState({restaurants: data});
+                }
+            );
+        }
     }
 
 
@@ -32,9 +40,30 @@ class clientRestaurantPage extends Component {
         }
     }
 
+    makeEmail(){
+        if(this.state.cart.length !== 0){
+             const emailInfo ={
+                from_name: this.username,
+                location: 'random',
+                order: '',
+                price: this.state.price
+            }
+            this.state.cart.map((food)=>(
+                emailInfo.order=emailInfo.order+food.name+' '+food.price+"\n"
+            ))
+            emailjs.send()
+                .then((result) => {
+                    alert(result.text);
+                },
+                (error) => {
+                    alert(error.text);
+                });
+         }
+    }
+
     addFood(value,value2) {
         this.state.cart.length === 0 ?
-            this.setState({cart: [value],sName:value2.name,price:this.state.price+value.price}) :
+            this.setState({cart: [value],sName:value2.name,price:this.state.price+value.price,selRes: value2}) :
             this.setState({cart: [...this.state.cart, value],price:this.state.price+value.price})
     }
 
@@ -45,7 +74,7 @@ class clientRestaurantPage extends Component {
             })
         ,price:this.state.price-value.price})
         if(this.state.cart.length===0)
-            this.setState({sName:''})
+            this.setState({sName:'',selRes:''})
 
     }
 
@@ -58,7 +87,9 @@ class clientRestaurantPage extends Component {
             }
             this.state.cart.map((food)=>
                 addVal.foods=[...addVal.foods,food.name])
-            axios.post("/orders/add",addVal).then(response=>{
+            axios.post("/orders/add",addVal,{
+                headers:{Authorization: "Bearer " + this.user.jwt }
+            }).then(response=>{
                 if(response.data!=null){
                     alert("Created order");
                     this.setState({cart:[],sName:''})
@@ -97,6 +128,9 @@ class clientRestaurantPage extends Component {
                         }
                         </tbody>
                     </Table>
+                    <Button onClick={()=>this.makeEmail()}>
+                        Send Email
+                    </Button>
                     <p></p>
                     Price {this.state.price}
                     <p></p>

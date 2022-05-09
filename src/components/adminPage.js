@@ -18,6 +18,7 @@ class adminPage extends React.Component{
                     <Link to={this.username+"/orders"} className="nav-link">See Orders </Link>
                 </Nav>
             </Navbar>
+
         );
     }
 }

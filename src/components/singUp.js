@@ -21,7 +21,7 @@ class signUp extends Component {
                     address: this.state.address
                 }
 
-                axios.post("/clients/add", client).then(response => {
+                axios.post("/authcontroller/signupClient", client).then(response => {
                     if (response.data != null) {
                         alert("Added Client");
                     }
@@ -36,7 +36,7 @@ class signUp extends Component {
                     password: this.state.password,
                 }
 
-                axios.post("/admins/add", admin).then(response => {
+                axios.post("/authcontroller/signupAdmin", admin).then(response => {
                     if (response.data != null) {
                         alert("Added Admin");
                     }

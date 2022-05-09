@@ -16,6 +16,7 @@ import clientOrderPage from "./components/clientOrderPage";
 
 function App() {
   const marginTop={marginTop:"20px"};
+
     return (
       <Router>
         <NavigationBar/>
@@ -32,7 +33,6 @@ function App() {
                   <Route path="/admins/:username/restaurant" exact component={restaurantPage}/>
                   <Route path="/admins/:username/food" exact component={adminFoodPage}/>
                   <Route path="/admins/:username/orders" exact component={adminOrderPage}/>
-
               </Switch>
             </Col>
             </Row>

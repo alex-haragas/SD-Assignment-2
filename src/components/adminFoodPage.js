@@ -6,39 +6,48 @@ class adminFoodPage extends Component {
 
     constructor(props) {
         super(props);
-        this.state = {foods:[], name: '', desc: '',price:'',categ:'',sCateg:''};
+        this.state = {foods: [], name: '', desc: '', price: '', categ: '', sCateg: ''};
         this.createRestaurant = this.createRestaurant.bind(this);
         this.restaurantChange = this.restaurantChange.bind(this);
-        this.username=this.props.match.params.username;
+        this.username = this.props.match.params.username;
+        this.user = JSON.parse(localStorage.getItem('user'));
     }
 
 
-    async componentDidMount(){
-        axios.get("/food/"+this.username).then(response=>response.data).then(
-            (data)=>{
-                this.setState({foods:data});
-            }
-        );
+    async componentDidMount() {
+        if (JSON.parse(localStorage.getItem('user')).username === this.username)
+            axios.get("/food/" + this.username, {
+                headers: {Authorization: "Bearer " + this.user.jwt}
+            }).then(response => response.data).then(
+                (data) => {
+                    this.setState({foods: data});
+                }
+            );
+        else
+            this.setState({foods: []});
     }
 
     createRestaurant = event => {
-        const addVal = {
-            name: this.state.name,
-            description:  this.state.desc,
-            price: this.state.price,
-            category: this.state.categ,
-            username: this.username
+        if (this.user.username === this.username) {
+            const addVal = {
+                name: this.state.name,
+                description: this.state.desc,
+                price: this.state.price,
+                category: this.state.categ,
+                username: this.username
             }
-        axios.post("/food/add",addVal).then(response => {
-                if (response.data != null) {
-                    alert("Added food");
+            axios.post("/food/add", addVal, {
+                headers: {Authorization: "Bearer " + this.user.jwt}
+            }).then(response => {
+                    if (response.data != null) {
+                        alert("Added food");
+                    } else {
+                        alert("Something is wrong.");
+                    }
                 }
-                else{
-                    alert("Something is wrong.");
-                }
-            }
-        )
-        event.preventDefault();
+            )
+            event.preventDefault();
+        }
 
     }
 
@@ -100,35 +109,36 @@ class adminFoodPage extends Component {
 
 
                     <Table bordered hover striped variant="dark">
-                    <thead>
-                    <tr>
-                        <th>Name</th>
-                        <th>Description</th>
-                        <th>Price</th>
-                        <th>Category</th>
-                    </tr>
-                    </thead>
+                        <thead>
+                        <tr>
+                            <th>Name</th>
+                            <th>Description</th>
+                            <th>Price</th>
+                            <th>Category</th>
+                        </tr>
+                        </thead>
                         <tbody>
-                    {
+                        {
 
-                        this.state.foods.length === 0 ?
-                            <tr></tr>:
-                        this.state.foods.map((food)=>(
-                            food.category===this.state.sCateg || this.state.sCateg===''?
-                            <tr key={food.id}>
-                                <td> {food.name}</td>
-                                <td> {food.description}</td>
-                                <td> {food.price}</td>
-                                <td> {food.category}</td>
-                            </tr>:
-                                <tr></tr>
-                        ))
-                    }
-                    </tbody>
+                            this.state.foods.length === 0 ?
+                                <tr></tr> :
+                                this.state.foods.map((food) => (
+                                    food.category === this.state.sCateg || this.state.sCateg === '' ?
+                                        <tr key={food.id}>
+                                            <td> {food.name}</td>
+                                            <td> {food.description}</td>
+                                            <td> {food.price}</td>
+                                            <td> {food.category}</td>
+                                        </tr> :
+                                        <tr></tr>
+                                ))
+                        }
+                        </tbody>
                     </Table>
                 </Card.Body>
             </Card>
         );
+
     }
 }
 
